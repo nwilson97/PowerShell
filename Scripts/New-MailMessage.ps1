@@ -1,40 +1,61 @@
 function New-MailMessage {
     [CmdletBinding()]
     param (
-        # Email body
+        # Body
         [Parameter(Mandatory)]
-        [string]$Body,
+        [string]
+        $Body,
 
-        # Email subject
+        # Subject
         [Parameter()]
-        [string]$Subject = 'New message'
+        [string]
+        $Subject = 'New message',
+
+        # Recipient
+        [Parameter()]
+        [mailaddress]
+        $Recipient = 'nicholaswilson97@gmail.com',
+
+        # From
+        [Parameter()]
+        [string]
+        $From = 'nicholaswilson97@gmail.com'
     )
 
-    # Define Credentials
-    [string]$userName = 'nicholaswilson97@gmail.com'
-    [string]$userPassword = 'gfzhakxetwkyrqdr'
+    # Retrieve credentials
+    $vaultpassword = (Import-CliXml ~/vaultpassword.xml).Password
+    Unlock-SecretStore -Password $vaultpassword
+    [pscredential]$credential = Get-Secret -Name Email -Vault LocalVault
+    #$userName = $credentialObject.$userName
+    #$password = $credential.Password
 
-    # Crete credential Object
-    [SecureString]$secureString = $userPassword | ConvertTo-SecureString -AsPlainText -Force 
-    [PSCredential]$credentialObejct = New-Object System.Management.Automation.PSCredential -ArgumentList $userName, $secureString
+    # Set SMTP server
+    $PSEmailServer = 'smtp.gmail.com'
 
     $Params = @{
-    #   Attachments = ''
-        Body        = $Body
-        From        = $userName
-        SmtpServer  = 'smtp.gmail.com'
-        Subject     = $Subject
-        To          = $userName
-        Credential  = $credentialObejct
-        UseSsl      = $True
-        Port        = 587
+        #Attachments = ''
+        Body       = $Body
+        From       = $From
+        #SmtpServer = 'smtp.gmail.com'
+        Subject    = $Subject
+        To         = $Recipient
+        Credential = $credential
+        UseSsl     = $True
+        Port       = 587
     }
     
-    Send-MailMessage @Params -WarningAction SilentlyContinue  
+    try {
+        Send-MailMessage @Params -ErrorAction Stop -WarningAction SilentlyContinue
+    }
+    catch {
+        Write-Error $PSItem.Exception.Message
+    }
+    
+    #Requires -Modules Microsoft.PowerShell.SecretManagement, Microsoft.PowerShell.SecretStore
     <#
     .SYNOPSIS
-        A basic script to send email
+    A basic script to send email
     .DESCRIPTION
-        This script is mean to take output from another script and send it via email
+    This script is mean to take output from another script and send it via email
     #>
 }
