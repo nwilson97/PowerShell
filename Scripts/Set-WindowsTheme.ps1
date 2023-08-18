@@ -1,45 +1,73 @@
-<# Set light theme
-Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'AppsUseLightTheme' -Type DWord -Value 1
-Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'SystemUsesLightTheme' -Type DWord -Value 1
-#Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'ColorPrevalence' -Type DWord -Value 1
-#>
+# Registry path
+$regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
 
-<# Set dark theme
-Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'AppsUseLightTheme' -Type DWord -Value 0
-Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'SystemUsesLightTheme' -Type DWord -Value 0
-Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'ColorPrevalence' -Type DWord -Value 1
-#>
+# Registry properties
+$apps = 'AppsUseLightTheme'
+#$system = 'SystemUsesLightTheme'
+#$color = 'ColorPrevalence'
+#$transparency = 'EnableTransparency'
 
+# API URIs
+$locationUri = 'http://ip-api.com/json'
+$solarUri = 'https://api.sunrisesunset.io/json'
 
-#<# Get location
-$location = (Invoke-RestMethod "http://ip-api.com/json/")
+# Current location
+$location = Invoke-RestMethod -Method Get -Uri $locationUri
 $lat = $location.lat
-$lng = $location.lon
+$lon = $location.lon
 $tz = $location.timezone
-#>
 
-#<# Get sunset today
-$today = (Invoke-RestMethod -Method Get -Uri "https://api.sunrisesunset.io/json?lat=$lat&lng=$lng&date=today&timezone=$tz").results
-$sunset  = $today.Sunset | Get-Date
-#>
+# Current time
+$now = Get-Date
 
-#<# Get sunrise tomorrow
-$tomorrow = (Invoke-RestMethod -Method Get -Uri "https://api.sunrisesunset.io/json?lat=$lat&lng=$lng&date=today&timezone=$tz").results
-$sunrise = $tomorrow.sunrise | Get-Date
-#>
+# Solar times today
+$today = (Invoke-RestMethod -Method Get -Uri "${solarUri}?lat=$lat&lng=$lon&date=today&timezone=$tz").results
+$sunriseToday = $today.Sunset | Get-Date
+$sunsetToday = $today.Sunset | Get-Date
 
-$light = 'Set light theme'
-$dark = 'Set dark theme'
+# Solar times tomorrow
+$tomorrow = (Invoke-RestMethod -Method Get -Uri "${solarUri}?lat=$lat&lng=$lon&date=tomorrow&timezone=$tz").results
+$sunriseTomorrow = $tomorrow.sunrise | Get-Date
+#$sunsetTomorrow = $tomorrow.sunset | Get-Date
+
+# Tasks
+$taskName = 'Set theme'
+#$tasks = Get-ScheduledTask -Taskpath '\My Tasks\' -TaskName 'Set * theme' | Get-ScheduledTaskInfo
+#$previousTask = $tasks | Sort-Object -Property LastRunTime | Select-Object -Last 1
+#$nextTask = $tasks | Sort-Object -Property NextRunTime | Select-Object -First 1
+
+# Set next solar time and theme
+if ($sunriseToday -gt $now) {
+    $nextTime = $sunriseToday
+    $nextTheme = 'light'
+}
+elseif ($sunriseToday -lt $now -and $sunsetToday -gt $now) {
+    $nextTime = $sunsetToday
+    $nextTheme = 'dark'
+}
+elseif ($sunsetToday -lt $now) {
+    $nextTime = $sunriseTomorrow
+    $nextTheme = 'light'
+}
+
+# Set registry property value
+if ($nextTheme -eq 'light') {
+    $value = 1
+}
+elseif ($nextTheme -eq 'dark') {
+    $value = 0
+}
+
+# Functions
+function Set-Theme {
+    Set-ItemProperty -Path $regPath -Name $apps -Value $value
+}
 
 function Update-Task {
-    param (
-        $Theme=($light,$dark),
-        $Time=($sunrise,$sunset)
-    )
-    $trigger = New-ScheduledTaskTrigger -At $Time -Daily
-    Set-ScheduledTask -TaskPath '\My Tasks\' -TaskName $Theme -Trigger $trigger
+    $trigger = New-ScheduledTaskTrigger -At $nextTime -Daily
+    Set-ScheduledTask -TaskPath '\My Tasks\' -TaskName $taskName -Trigger $trigger 
 }
-#<# Update task
-#>
 
-Update-Task -Theme $dark -Time $sunset
+
+Set-Theme
+Update-Task
