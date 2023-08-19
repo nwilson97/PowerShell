@@ -64,7 +64,10 @@ function Set-Theme {
 }
 
 function Update-Task {
-    $trigger = New-ScheduledTaskTrigger -At $nextTime -Daily
+    $trigger = @(
+        $(New-ScheduledTaskTrigger -AtLogOn -User 'nicho'),
+        $(New-ScheduledTaskTrigger -At $nextTime -Once)
+    )
     Set-ScheduledTask -TaskPath '\My Tasks\' -TaskName $taskName -Trigger $trigger 
 }
 
