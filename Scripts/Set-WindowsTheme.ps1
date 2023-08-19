@@ -10,7 +10,7 @@ $apps = 'AppsUseLightTheme'
 # Task info
 $taskPath = '\My Tasks\'
 $taskName = 'Set theme'
-$user = 'nicho'
+$taskUser = 'nicho'
 
 # API URIs
 $locationUri = 'http://ip-api.com/json'
@@ -69,7 +69,7 @@ function Set-Theme {
 
 function Update-Task {
     $trigger = @(
-        $(New-ScheduledTaskTrigger -AtLogOn -User $user),
+        $(New-ScheduledTaskTrigger -AtLogOn -User $taskUser),
         $(New-ScheduledTaskTrigger -At $nextTime -Once)
     )
     Set-ScheduledTask -TaskPath $taskPath -TaskName $taskName -Trigger $trigger 
