@@ -22,7 +22,7 @@ $now = Get-Date
 
 # Solar times today
 $today = (Invoke-RestMethod -Method Get -Uri "${solarUri}?lat=$lat&lng=$lon&date=today&timezone=$tz").results
-$sunriseToday = $today.Sunset | Get-Date
+$sunriseToday = $today.sunrise | Get-Date
 $sunsetToday = $today.Sunset | Get-Date
 
 # Solar times tomorrow
