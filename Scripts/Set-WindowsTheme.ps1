@@ -7,6 +7,10 @@ $apps = 'AppsUseLightTheme'
 #$color = 'ColorPrevalence'
 #$transparency = 'EnableTransparency'
 
+# Task info
+$taskPath = '\My Tasks\'
+$taskName = 'Set theme'
+
 # API URIs
 $locationUri = 'http://ip-api.com/json'
 $solarUri = 'https://api.sunrisesunset.io/json'
@@ -17,7 +21,7 @@ $lat = $location.lat
 $lon = $location.lon
 $tz = $location.timezone
 
-# Current time
+# Current datetime
 $now = Get-Date
 
 # Solar times today
@@ -30,12 +34,6 @@ $tomorrow = (Invoke-RestMethod -Method Get -Uri "${solarUri}?lat=$lat&lng=$lon&d
 $sunriseTomorrow = $tomorrow.sunrise | Get-Date
 $sunriseTomorrow = $sunriseTomorrow.AddDays(1)
 #$sunsetTomorrow = $tomorrow.sunset | Get-Date
-
-# Tasks
-$taskName = 'Set theme'
-#$tasks = Get-ScheduledTask -Taskpath '\My Tasks\' -TaskName 'Set * theme' | Get-ScheduledTaskInfo
-#$previousTask = $tasks | Sort-Object -Property LastRunTime | Select-Object -Last 1
-#$nextTask = $tasks | Sort-Object -Property NextRunTime | Select-Object -First 1
 
 # Set next solar time and theme
 if ($now -lt $sunriseToday) {
@@ -61,7 +59,10 @@ elseif ($setTheme -eq 'dark') {
 
 # Functions
 function Set-Theme {
-    Set-ItemProperty -Path $regPath -Name $apps -Value $value
+    Set-ItemProperty -Path $regPath -Name $apps -Value $value #App theme    
+    #Set-ItemProperty -Path $regPath -Name $apps -Value $value #System theme
+    #Set-ItemProperty -Path $regPath -Name $apps -Value $value #Taskbar theme
+    #Set-ItemProperty -Path $regPath -Name $apps -Value $value #Transparency
 }
 
 function Update-Task {
@@ -69,7 +70,7 @@ function Update-Task {
         $(New-ScheduledTaskTrigger -AtLogOn -User 'nicho'),
         $(New-ScheduledTaskTrigger -At $nextTime -Once)
     )
-    Set-ScheduledTask -TaskPath '\My Tasks\' -TaskName $taskName -Trigger $trigger 
+    Set-ScheduledTask -TaskPath $taskPath -TaskName $taskName -Trigger $trigger 
 }
 
 
