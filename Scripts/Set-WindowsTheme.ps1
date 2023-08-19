@@ -10,6 +10,7 @@ $apps = 'AppsUseLightTheme'
 # Task info
 $taskPath = '\My Tasks\'
 $taskName = 'Set theme'
+$user = 'nicho'
 
 # API URIs
 $locationUri = 'http://ip-api.com/json'
@@ -34,6 +35,7 @@ $tomorrow = (Invoke-RestMethod -Method Get -Uri "${solarUri}?lat=$lat&lng=$lon&d
 $sunriseTomorrow = $tomorrow.sunrise | Get-Date
 $sunriseTomorrow = $sunriseTomorrow.AddDays(1)
 #$sunsetTomorrow = $tomorrow.sunset | Get-Date
+#$sunsetTomorrow = $sunsetTomorrow.AddDays(1)
 
 # Set next solar time and theme
 if ($now -lt $sunriseToday) {
@@ -60,19 +62,18 @@ elseif ($setTheme -eq 'dark') {
 # Functions
 function Set-Theme {
     Set-ItemProperty -Path $regPath -Name $apps -Value $value #App theme    
-    #Set-ItemProperty -Path $regPath -Name $apps -Value $value #System theme
-    #Set-ItemProperty -Path $regPath -Name $apps -Value $value #Taskbar theme
-    #Set-ItemProperty -Path $regPath -Name $apps -Value $value #Transparency
+    #Set-ItemProperty -Path $regPath -Name $system -Value $value #System theme
+    #Set-ItemProperty -Path $regPath -Name $color -Value $value #Taskbar theme
+    #Set-ItemProperty -Path $regPath -Name $transparency -Value $value #Transparency
 }
 
 function Update-Task {
     $trigger = @(
-        $(New-ScheduledTaskTrigger -AtLogOn -User 'nicho'),
+        $(New-ScheduledTaskTrigger -AtLogOn -User $user),
         $(New-ScheduledTaskTrigger -At $nextTime -Once)
     )
     Set-ScheduledTask -TaskPath $taskPath -TaskName $taskName -Trigger $trigger 
 }
-
 
 Set-Theme
 Update-Task
