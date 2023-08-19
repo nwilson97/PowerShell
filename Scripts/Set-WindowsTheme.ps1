@@ -28,6 +28,7 @@ $sunsetToday = $today.Sunset | Get-Date
 # Solar times tomorrow
 $tomorrow = (Invoke-RestMethod -Method Get -Uri "${solarUri}?lat=$lat&lng=$lon&date=tomorrow&timezone=$tz").results
 $sunriseTomorrow = $tomorrow.sunrise | Get-Date
+$sunriseTomorrow = $sunriseTomorrow.AddDays(1)
 #$sunsetTomorrow = $tomorrow.sunset | Get-Date
 
 # Tasks
@@ -37,24 +38,24 @@ $taskName = 'Set theme'
 #$nextTask = $tasks | Sort-Object -Property NextRunTime | Select-Object -First 1
 
 # Set next solar time and theme
-if ($sunriseToday -gt $now) {
+if ($now -lt $sunriseToday) {
     $nextTime = $sunriseToday
-    $nextTheme = 'light'
+    $setTheme = 'dark'
 }
-elseif ($sunriseToday -lt $now -and $sunsetToday -gt $now) {
+elseif ($now -gt $sunriseToday -and $now -lt $sunsetToday) {
     $nextTime = $sunsetToday
-    $nextTheme = 'dark'
+    $setTheme = 'light'
 }
-elseif ($sunsetToday -lt $now) {
+elseif ($now -gt $sunsetToday) {
     $nextTime = $sunriseTomorrow
-    $nextTheme = 'light'
+    $setTheme = 'dark'
 }
 
 # Set registry property value based on upcoming theme
-if ($nextTheme -eq 'light') {
+if ($setTheme -eq 'light') {
     $value = 1
 }
-elseif ($nextTheme -eq 'dark') {
+elseif ($setTheme -eq 'dark') {
     $value = 0
 }
 
@@ -72,5 +73,5 @@ function Update-Task {
 }
 
 
-#Set-Theme
-#Update-Task
+Set-Theme
+Update-Task
