@@ -72,5 +72,5 @@ function Update-Task {
 }
 
 
-Set-Theme
-Update-Task
+#Set-Theme
+#Update-Task
