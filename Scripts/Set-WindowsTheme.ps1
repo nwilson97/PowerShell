@@ -50,7 +50,7 @@ elseif ($sunsetToday -lt $now) {
     $nextTheme = 'light'
 }
 
-# Set registry property value
+# Set registry property value based on upcoming theme
 if ($nextTheme -eq 'light') {
     $value = 1
 }
